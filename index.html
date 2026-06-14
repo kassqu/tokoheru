@@ -578,14 +578,10 @@
               return;
           }
 
-          // 2. Deteksi kategori: Munculkan form Keterangan di semua kategori KECUALI 3 ini
-          // const cat = p.category ? p.category.toLowerCase().trim() : '';
-          // const showKeterangan = cat !== 'pulsa' && cat !== 'voucher & kartu' && cat !== 'pulsa pln';
+          // 2. Munculkan form Keterangan di semua kategori
+          const showKeterangan = true;
           
-          // 3. Munculkan form Keterangan di semua kategori
-             const showKeterangan = true;
-          
-        let extraHtml = '';
+          let extraHtml = '';
           if (showKeterangan) {
               extraHtml = `
                   <div class="mb-3">
@@ -595,7 +591,7 @@
               `;
           }
 
-          // Siapkan pre-fill angka dari database biar kasir gak capek ngetik ulang
+          // Siapkan pre-fill angka dari database
           const defaultModal = p.modal ? formatThousand(p.modal) : '0';
           const defaultJual = p.price ? formatThousand(p.price) : '0';
 
@@ -609,27 +605,43 @@
                       <div class="grid grid-cols-2 gap-3 mt-2">
                           <div>
                               <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-widest">Harga Modal:</label>
-                              <div class="relative">
-                                  <span class="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-slate-300">Rp</span>
-                                  <input id="swal-modal-input" type="text" value="${defaultModal}" class="w-full p-3 pl-8 font-black border-2 border-slate-100 rounded-xl text-right focus:border-indigo-500 outline-none text-slate-600">
+                              <div class="relative flex items-center">
+                                  <span class="absolute left-3 font-bold text-slate-300">Rp</span>
+                                  <input id="swal-modal-input" type="text" value="${defaultModal}" class="w-full py-3 pl-8 pr-14 font-black border-2 border-slate-100 rounded-xl text-right focus:border-indigo-500 outline-none text-slate-600">
+                                  <button type="button" id="btn-modal-000" class="absolute right-2 bg-slate-200 text-slate-600 text-[10px] font-black px-2 py-1.5 rounded hover:bg-slate-300 active:scale-95 transition-transform" title="Tambah 3 Nol">000</button>
                               </div>
                           </div>
                           <div>
                               <label class="block text-[10px] font-bold text-indigo-400 mb-1 uppercase tracking-widest">Harga Jual:</label>
-                              <div class="relative">
-                                  <span class="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-indigo-300">Rp</span>
-                                  <input id="swal-jual-input" type="text" value="${defaultJual}" class="w-full p-3 pl-8 font-black border-2 border-indigo-200 bg-indigo-50 rounded-xl text-right focus:border-indigo-500 outline-none text-indigo-700">
+                              <div class="relative flex items-center">
+                                  <span class="absolute left-3 font-bold text-indigo-300">Rp</span>
+                                  <input id="swal-jual-input" type="text" value="${defaultJual}" class="w-full py-3 pl-8 pr-14 font-black border-2 border-indigo-200 bg-indigo-50 rounded-xl text-right focus:border-indigo-500 outline-none text-indigo-700">
+                                  <button type="button" id="btn-jual-000" class="absolute right-2 bg-indigo-200 text-indigo-700 text-[10px] font-black px-2 py-1.5 rounded hover:bg-indigo-300 active:scale-95 transition-transform" title="Tambah 3 Nol">000</button>
                               </div>
                           </div>
                       </div>
+                      <p class="text-[9px] text-slate-400 mt-2 text-center">*Tips: Tekan tombol <b>Spasi</b> atau <b>Titik (.)</b> saat ngetik untuk tambah "000" otomatis</p>
                   </div>
               `,
               showCancelButton: true,
               confirmButtonText: 'Tambahkan',
               confirmButtonColor: '#4f46e5',
               didOpen: () => {
-                  // Format Rupiah Otomatis saat ngetik
+                  // Format Rupiah Otomatis saat ngetik & Jalan Pintas "000"
                   const formatRupiahInput = (el) => {
+                      // 1. Tangkap ketikan Spasi atau Titik
+                      el.addEventListener('keydown', (e) => {
+                          if (e.key === ' ' || e.key === '.' || e.key.toLowerCase() === 'k') {
+                              e.preventDefault(); // Cegah spasi masuk ke input
+                              let raw = el.value.replace(/[^0-9]/g, '');
+                              if (raw) {
+                                  raw = raw + "000";
+                                  el.value = parseInt(raw).toLocaleString('id-ID');
+                              }
+                          }
+                      });
+
+                      // 2. Format Rupiah Normal
                       el.addEventListener('input', (e) => {
                           let raw = e.target.value.replace(/[^0-9]/g, '');
                           e.target.value = raw ? parseInt(raw).toLocaleString('id-ID') : '';
@@ -639,9 +651,25 @@
                   const jualInput = document.getElementById('swal-jual-input');
                   const modalInput = document.getElementById('swal-modal-input');
                   const ketInput = document.getElementById('swal-keterangan');
+                  
+                  const btnModal000 = document.getElementById('btn-modal-000');
+                  const btnJual000 = document.getElementById('btn-jual-000');
 
                   if (jualInput) formatRupiahInput(jualInput);
                   if (modalInput) formatRupiahInput(modalInput);
+
+                  // Fungsi buat Tombol "000" di layar
+                  const append000 = (inputEl) => {
+                      let raw = inputEl.value.replace(/[^0-9]/g, '');
+                      if (raw) {
+                          raw = raw + "000";
+                          inputEl.value = parseInt(raw).toLocaleString('id-ID');
+                          inputEl.focus(); // Balikin fokus ke input
+                      }
+                  };
+
+                  if (btnModal000 && modalInput) btnModal000.addEventListener('click', () => append000(modalInput));
+                  if (btnJual000 && jualInput) btnJual000.addEventListener('click', () => append000(jualInput));
 
                   // Arahkan kursor cerdas
                   if (showKeterangan && ketInput) {
@@ -661,11 +689,10 @@
                   let finalName = p.name;
                   let finalNote = `Modal: ${modal}`;
 
-                  // Kalau form keterangan aktif dan kasir ngisi sesuatu
                   if (showKeterangan) {
                       const ket = document.getElementById('swal-keterangan').value.trim();
                       if (ket !== '') {
-                          finalName = `${p.name} - ${ket}`; // Gabungin nama barang + keterangan di struk
+                          finalName = `${p.name} - ${ket}`; 
                       }
                   }
 
@@ -676,22 +703,18 @@
                   const { finalName, jual, modal, finalNote } = res.value;
                   
                   setCart(prevCart => {
-                      // Cek apakah barang dengan nama persis dan harga yang sama udah ada di keranjang
                       const existingItem = prevCart.find(item => item.name === finalName && item.price === jual);
                       
                       if (existingItem) {
-                          // Cegah penambahan kalau stok udah mentok
                           if (p.stock !== undefined && existingItem.qty >= p.stock) {
                               showAlert({ icon: 'error', title: 'Stok Habis', text: 'Barang tidak mencukupi!' });
                               return prevCart;
                           }
-                          // Tumpuk (tambah qty) jadi 1 baris
                           return prevCart.map(item =>
                               item.id === existingItem.id ? { ...item, qty: item.qty + 1 } : item
                           );
                       }
                       
-                      // Kalau beda keterangan atau barang baru, bikin baris baru
                       const newItem = {
                           id: `PROD-${Date.now()}`,
                           name: finalName,
