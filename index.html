@@ -495,26 +495,60 @@
               ` : ''}
               <div>
                 <label class="block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-widest">Nominal ${action.name}:</label>
-                <div class="relative">
-                  <span class="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-300 text-xl">Rp</span>
-                  <input id="swal-nominal" class="w-full p-5 text-3xl font-black border-2 border-slate-100 rounded-3xl text-right focus:border-indigo-500 outline-none" placeholder="0">
+                
+                <!-- INPUT NOMINAL DENGAN TOMBOL 000 -->
+                <div class="relative flex items-center">
+                  <span class="absolute left-4 font-black text-slate-300 text-xl">Rp</span>
+                  <input id="swal-nominal" class="w-full py-5 pl-12 pr-16 text-3xl font-black border-2 border-slate-100 rounded-3xl text-right focus:border-indigo-500 outline-none" placeholder="0">
+                  <button type="button" id="btn-quick-000" class="absolute right-3 bg-indigo-100 text-indigo-600 text-sm font-black px-3 py-2 rounded-xl hover:bg-indigo-200 active:scale-95 transition-transform" title="Tambah 3 Nol">000</button>
                 </div>
+                <p class="text-[9px] text-slate-400 mt-2 text-center">*Tips: Tekan tombol <b>Spasi</b> atau <b>Titik (.)</b> untuk tambah "000" otomatis</p>
+              
               </div>
             </div>
           `,
           showCancelButton: true,
           confirmButtonText: 'Tambah',
+          confirmButtonColor: '#4f46e5',
           didOpen: () => {
             const nom = document.getElementById('swal-nominal');
+            const btn000 = document.getElementById('btn-quick-000');
             nom.focus();
+
+            // 1. Tangkap ketikan Spasi atau Titik
+            nom.addEventListener('keydown', (e) => {
+                if (e.key === ' ' || e.key === '.' || e.key.toLowerCase() === 'k') {
+                    e.preventDefault(); 
+                    let raw = nom.value.replace(/\D/g, '');
+                    if (raw) {
+                        raw = raw + "000";
+                        nom.value = parseInt(raw).toLocaleString('id-ID');
+                    }
+                }
+            });
+
+            // 2. Format normal saat ngetik angka
             nom.oninput = (e) => {
               let val = e.target.value.replace(/\D/g, '');
               e.target.value = val ? parseInt(val).toLocaleString('id-ID') : '';
             };
+
+            // 3. Tombol 000 diklik
+            if (btn000) {
+                btn000.addEventListener('click', () => {
+                    let raw = nom.value.replace(/\D/g, '');
+                    if (raw) {
+                        raw = raw + "000";
+                        nom.value = parseInt(raw).toLocaleString('id-ID');
+                        nom.focus(); // Balikin kursor biar bisa langsung di-enter
+                    }
+                });
+            }
           },
           preConfirm: () => {
             const nominal = parseInt(document.getElementById('swal-nominal').value.replace(/\D/g, ''));
-            const vendor = document.getElementById('swal-vendor').value;
+            const vendorEl = document.getElementById('swal-vendor');
+            const vendor = vendorEl ? vendorEl.value : '';
             
             if (!nominal) return window.Swal.showValidationMessage('Isi nominal!');
 
